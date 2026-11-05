@@ -1,6 +1,6 @@
 {
   "titulo": "Java Study Hub",
-  "versao": "1.0",
+  "versao": "1.1",
   "modulos": [
     {
       "id": "modulo-01",
@@ -10,65 +10,152 @@
           "id": "plataforma-java",
           "titulo": "Plataforma Java e JVM",
           "resumo": "JDK, JRE, JVM, bytecode, ClassLoader e compilação JIT.",
-          "mapaMental": "imagens/jvm.webp",
+          "mapaMental": "imagens/jvm.svg",
           "secoes": [
-            {"titulo": "JDK, JRE e JVM", "conteudo": "O JDK (Java Development Kit) reúne ferramentas para desenvolver aplicações, incluindo o compilador javac. O JRE é o ambiente necessário para executar aplicações Java, composto pela JVM e bibliotecas de execução. A JVM é a máquina virtual que carrega, verifica e executa bytecode. Nas distribuições modernas do JDK, o ambiente de execução costuma vir integrado, sem exigir um JRE separado."},
-            {"titulo": "Compilação e execução", "conteudo": "O compilador javac transforma arquivos .java em arquivos .class contendo bytecode. A JVM executa esse bytecode em uma plataforma específica, permitindo que o mesmo programa compilado rode em sistemas com JVMs compatíveis.", "codigo": "public class OlaJava {\n    public static void main(String[] args) {\n        System.out.println(\"Olá, Java!\");\n    }\n}\n\n// Compilar: javac OlaJava.java\n// Executar: java OlaJava"},
-            {"titulo": "ClassLoader", "conteudo": "O subsistema de carregamento localiza e define classes conforme necessário. Em geral, os carregadores seguem o modelo de delegação aos pais: bootstrap, platform e application. O carregamento de uma classe não significa que todas as suas classes relacionadas serão carregadas imediatamente."},
-            {"titulo": "JIT e otimização", "conteudo": "A JVM pode interpretar bytecode e compilar trechos frequentemente executados para código de máquina por meio do JIT (Just-In-Time). A compilação JIT usa informações coletadas durante a execução para otimizar caminhos quentes. Nem todo método precisa ser compilado pelo JIT.", "destaque": "JVM é a máquina de execução; JDK é o kit de desenvolvimento. Bytecode é intermediário, não código de máquina nativo."}
+            {
+              "titulo": "JDK, JRE e JVM",
+              "conteudo": "O JDK (Java Development Kit) reúne ferramentas para desenvolver aplicações, incluindo o compilador javac. O JRE é o ambiente necessário para executar aplicações Java, composto pela JVM e bibliotecas de execução. A JVM é a máquina virtual que carrega, verifica e executa bytecode. Nas distribuições modernas do JDK, o ambiente de execução costuma vir integrado, sem exigir um JRE separado."
+            },
+            {
+              "titulo": "Compilação e execução",
+              "conteudo": "O compilador javac transforma arquivos .java em arquivos .class contendo bytecode. A JVM executa esse bytecode em uma plataforma específica, permitindo que o mesmo programa compilado rode em sistemas com JVMs compatíveis.",
+              "codigo": "public class OlaJava {\n    public static void main(String[] args) {\n        System.out.println(\"Olá, Java!\");\n    }\n}\n\n// Compilar: javac OlaJava.java\n// Executar: java OlaJava"
+            },
+            {
+              "titulo": "ClassLoader",
+              "conteudo": "O subsistema de carregamento localiza e define classes conforme necessário. Em geral, os carregadores seguem o modelo de delegação aos pais: bootstrap, platform e application. O carregamento de uma classe não significa que todas as suas classes relacionadas serão carregadas imediatamente."
+            },
+            {
+              "titulo": "JIT e otimização",
+              "conteudo": "A JVM pode interpretar bytecode e compilar trechos frequentemente executados para código de máquina por meio do JIT (Just-In-Time). A compilação JIT usa informações coletadas durante a execução para otimizar caminhos quentes. Nem todo método precisa ser compilado pelo JIT.",
+              "destaque": "JVM é a máquina de execução; JDK é o kit de desenvolvimento. Bytecode é intermediário, não código de máquina nativo."
+            }
           ]
         },
         {
           "id": "gerenciamento-memoria",
           "titulo": "Gerenciamento de Memória",
           "resumo": "Stack, Heap, Metaspace, referências e Garbage Collector.",
-          "mapaMental": "imagens/memoria.webp",
+          "mapaMental": "imagens/memoria.svg",
           "secoes": [
-            {"titulo": "Stack e frames", "conteudo": "Cada thread Java possui sua própria JVM Stack, formada por frames associados às invocações de métodos. Um frame contém variáveis locais, pilha de operandos e informações de retorno. Referências locais podem apontar para objetos no Heap. Não é correto afirmar que todos os valores primitivos sempre ficam na Stack: a localização depende do contexto e das otimizações."},
-            {"titulo": "Heap", "conteudo": "O Heap é compartilhado entre threads e normalmente contém objetos e arrays. Dois métodos podem possuir referências diferentes para o mesmo objeto. Compartilhar um objeto mutável entre threads exige atenção à sincronização e à visibilidade de memória.", "codigo": "Object primeiro = new Object();\nObject segundo = primeiro;\nSystem.out.println(primeiro == segundo); // true"},
-            {"titulo": "Metaspace", "conteudo": "Na HotSpot moderna, a Metaspace utiliza memória nativa para armazenar metadados de classes. Seu consumo pode crescer com o carregamento de muitas classes e carregadores de classes, e pode ser limitado por parâmetros de configuração."},
-            {"titulo": "Garbage Collector", "conteudo": "O Garbage Collector identifica objetos que não são mais alcançáveis a partir das raízes de referência e pode recuperar sua memória. A perda de uma referência não provoca coleta imediata. O GC automatiza a recuperação de memória, mas não impede vazamentos causados por referências mantidas desnecessariamente."},
-            {"titulo": "Referências e limites", "conteudo": "Referências fortes mantêm objetos alcançáveis; referências fracas (WeakReference) não impedem sua coleta. O parâmetro -Xmx limita o tamanho máximo do Heap. Um OutOfMemoryError pode ter causas diferentes, incluindo esgotamento do Heap ou de áreas de memória nativa.", "destaque": "Objeto elegível para coleta não significa objeto coletado imediatamente."}
+            {
+              "titulo": "Stack e frames",
+              "conteudo": "Cada thread Java possui sua própria JVM Stack, formada por frames associados às invocações de métodos. Um frame contém variáveis locais, pilha de operandos e informações de retorno. Referências locais podem apontar para objetos no Heap. Não é correto afirmar que todos os valores primitivos sempre ficam na Stack: a localização depende do contexto e das otimizações."
+            },
+            {
+              "titulo": "Heap",
+              "conteudo": "O Heap é compartilhado entre threads e normalmente contém objetos e arrays. Dois métodos podem possuir referências diferentes para o mesmo objeto. Compartilhar um objeto mutável entre threads exige atenção à sincronização e à visibilidade de memória.",
+              "codigo": "Object primeiro = new Object();\nObject segundo = primeiro;\nSystem.out.println(primeiro == segundo); // true"
+            },
+            {
+              "titulo": "Metaspace",
+              "conteudo": "Na HotSpot moderna, a Metaspace utiliza memória nativa para armazenar metadados de classes. Seu consumo pode crescer com o carregamento de muitas classes e carregadores de classes, e pode ser limitado por parâmetros de configuração."
+            },
+            {
+              "titulo": "Garbage Collector",
+              "conteudo": "O Garbage Collector identifica objetos que não são mais alcançáveis a partir das raízes de referência e pode recuperar sua memória. A perda de uma referência não provoca coleta imediata. O GC automatiza a recuperação de memória, mas não impede vazamentos causados por referências mantidas desnecessariamente."
+            },
+            {
+              "titulo": "Referências e limites",
+              "conteudo": "Referências fortes mantêm objetos alcançáveis; referências fracas (WeakReference) não impedem sua coleta. O parâmetro -Xmx limita o tamanho máximo do Heap. Um OutOfMemoryError pode ter causas diferentes, incluindo esgotamento do Heap ou de áreas de memória nativa.",
+              "destaque": "Objeto elegível para coleta não significa objeto coletado imediatamente."
+            }
           ]
         },
         {
           "id": "igualdade-hashing",
           "titulo": "Igualdade e Hashing",
           "resumo": "Identidade, equals(), hashCode(), HashMap e HashSet.",
-          "mapaMental": "imagens/equals-hashcode.webp",
+          "mapaMental": "imagens/equals-hashcode.svg",
           "secoes": [
-            {"titulo": "Identidade e igualdade", "conteudo": "O operador == compara identidade quando aplicado a referências: verifica se elas apontam para o mesmo objeto. equals() permite definir igualdade lógica. A implementação herdada de Object considera iguais apenas referências ao mesmo objeto, mas classes podem sobrescrever esse comportamento."},
-            {"titulo": "Contrato de equals()", "conteudo": "Uma implementação correta deve ser reflexiva, simétrica, transitiva e consistente, além de retornar false para null. Uma definição de igualdade instável pode causar comportamento inesperado em coleções."},
-            {"titulo": "Contrato de hashCode()", "conteudo": "Se a.equals(b) é true, a.hashCode() e b.hashCode() precisam ser iguais. O inverso não é obrigatório: objetos diferentes podem ter o mesmo hash. HashMap usa hashes para localizar regiões de armazenamento e depois compara chaves conforme necessário."},
-            {"titulo": "HashMap e HashSet", "conteudo": "HashMap associa chaves a valores; HashSet mantém elementos únicos e normalmente se apoia em uma estrutura de hashing. Colisões são normais e não implicam automaticamente perda de dados. Modificar campos usados em equals/hashCode depois de inserir uma chave em uma coleção hash pode impedir sua localização.", "codigo": "Set<String> nomes = new HashSet<>();\nnomes.add(\"Ana\");\nnomes.add(new String(\"Ana\"));\nSystem.out.println(nomes.size()); // 1"},
-            {"titulo": "Entidades persistidas", "conteudo": "Em entidades com identificadores gerados pelo banco, o ID pode ser null antes da persistência. Implementações de equals/hashCode devem considerar o ciclo de vida da entidade e possíveis proxies do ORM. Não existe uma estratégia única correta para todos os modelos.", "destaque": "Objetos iguais precisam ter hashes iguais; hashes iguais não garantem objetos iguais."}
+            {
+              "titulo": "Identidade e igualdade",
+              "conteudo": "O operador == compara identidade quando aplicado a referências: verifica se elas apontam para o mesmo objeto. equals() permite definir igualdade lógica. A implementação herdada de Object considera iguais apenas referências ao mesmo objeto, mas classes podem sobrescrever esse comportamento."
+            },
+            {
+              "titulo": "Contrato de equals()",
+              "conteudo": "Uma implementação correta deve ser reflexiva, simétrica, transitiva e consistente, além de retornar false para null. Uma definição de igualdade instável pode causar comportamento inesperado em coleções."
+            },
+            {
+              "titulo": "Contrato de hashCode()",
+              "conteudo": "Se a.equals(b) é true, a.hashCode() e b.hashCode() precisam ser iguais. O inverso não é obrigatório: objetos diferentes podem ter o mesmo hash. HashMap usa hashes para localizar regiões de armazenamento e depois compara chaves conforme necessário."
+            },
+            {
+              "titulo": "HashMap e HashSet",
+              "conteudo": "HashMap associa chaves a valores; HashSet mantém elementos únicos e normalmente se apoia em uma estrutura de hashing. Colisões são normais e não implicam automaticamente perda de dados. Modificar campos usados em equals/hashCode depois de inserir uma chave em uma coleção hash pode impedir sua localização.",
+              "codigo": "Set<String> nomes = new HashSet<>();\nnomes.add(\"Ana\");\nnomes.add(new String(\"Ana\"));\nSystem.out.println(nomes.size()); // 1"
+            },
+            {
+              "titulo": "Entidades persistidas",
+              "conteudo": "Em entidades com identificadores gerados pelo banco, o ID pode ser null antes da persistência. Implementações de equals/hashCode devem considerar o ciclo de vida da entidade e possíveis proxies do ORM. Não existe uma estratégia única correta para todos os modelos.",
+              "destaque": "Objetos iguais precisam ter hashes iguais; hashes iguais não garantem objetos iguais."
+            }
           ]
         },
         {
           "id": "concorrencia-atomicidade",
           "titulo": "Concorrência e Atomicidade",
           "resumo": "Race conditions, thread safety, ConcurrentHashMap e garantias do banco.",
-          "mapaMental": "imagens/concorrencia.webp",
+          "mapaMental": "imagens/concorrencia.svg",
           "secoes": [
-            {"titulo": "Concorrência e condições de corrida", "conteudo": "Concorrência significa lidar com múltiplas tarefas em progresso, possivelmente intercaladas. Uma race condition ocorre quando o resultado depende de uma ordem de execução não controlada. Operações aparentemente simples, como contador++, envolvem várias etapas e não são atomicamente seguras por padrão."},
-            {"titulo": "Segurança entre threads", "conteudo": "Thread safety é a propriedade de manter comportamento correto sob acesso concorrente. Pode ser obtida com imutabilidade, sincronização, estruturas concorrentes, operações atômicas e desenho cuidadoso do compartilhamento de estado."},
-            {"titulo": "HashMap e ConcurrentHashMap", "conteudo": "HashMap não oferece segurança geral para modificações concorrentes. ConcurrentHashMap suporta acessos concorrentes e oferece operações atômicas específicas, como putIfAbsent e compute. Entretanto, uma sequência de chamadas separadas pode não ser atômica.", "codigo": "ConcurrentHashMap<String, Integer> contagens = new ConcurrentHashMap<>();\ncontagens.merge(\"acessos\", 1, Integer::sum);"},
-            {"titulo": "Processos diferentes e banco de dados", "conteudo": "Um mapa em memória protege somente o processo que o contém; duas instâncias de uma aplicação não compartilham o mesmo ConcurrentHashMap. Restrições UNIQUE, transações e mecanismos de controle de concorrência do banco são necessários para proteger invariantes persistentes entre instâncias."},
-            {"titulo": "Transações e idempotência", "conteudo": "Atomicidade transacional significa que um conjunto de alterações é confirmado ou revertido conforme as garantias do banco. Em fluxos com filas, mensagens podem ser entregues mais de uma vez; consumidores idempotentes reduzem os efeitos de reprocessamentos. Para coordenar gravação no banco e publicação de eventos, o padrão Transactional Outbox pode ser útil.", "destaque": "ConcurrentHashMap não substitui restrições de integridade nem transações no banco de dados."}
+            {
+              "titulo": "Concorrência e condições de corrida",
+              "conteudo": "Concorrência significa lidar com múltiplas tarefas em progresso, possivelmente intercaladas. Uma race condition ocorre quando o resultado depende de uma ordem de execução não controlada. Operações aparentemente simples, como contador++, envolvem várias etapas e não são atomicamente seguras por padrão."
+            },
+            {
+              "titulo": "Segurança entre threads",
+              "conteudo": "Thread safety é a propriedade de manter comportamento correto sob acesso concorrente. Pode ser obtida com imutabilidade, sincronização, estruturas concorrentes, operações atômicas e desenho cuidadoso do compartilhamento de estado."
+            },
+            {
+              "titulo": "HashMap e ConcurrentHashMap",
+              "conteudo": "HashMap não oferece segurança geral para modificações concorrentes. ConcurrentHashMap suporta acessos concorrentes e oferece operações atômicas específicas, como putIfAbsent e compute. Entretanto, uma sequência de chamadas separadas pode não ser atômica.",
+              "codigo": "ConcurrentHashMap<String, Integer> contagens = new ConcurrentHashMap<>();\ncontagens.merge(\"acessos\", 1, Integer::sum);"
+            },
+            {
+              "titulo": "Processos diferentes e banco de dados",
+              "conteudo": "Um mapa em memória protege somente o processo que o contém; duas instâncias de uma aplicação não compartilham o mesmo ConcurrentHashMap. Restrições UNIQUE, transações e mecanismos de controle de concorrência do banco são necessários para proteger invariantes persistentes entre instâncias."
+            },
+            {
+              "titulo": "Transações e idempotência",
+              "conteudo": "Atomicidade transacional significa que um conjunto de alterações é confirmado ou revertido conforme as garantias do banco. Em fluxos com filas, mensagens podem ser entregues mais de uma vez; consumidores idempotentes reduzem os efeitos de reprocessamentos. Para coordenar gravação no banco e publicação de eventos, o padrão Transactional Outbox pode ser útil.",
+              "destaque": "ConcurrentHashMap não substitui restrições de integridade nem transações no banco de dados."
+            }
           ]
         },
         {
           "id": "threads-assincrono",
           "titulo": "Threads e Programação Assíncrona",
           "resumo": "Threads, pools, Virtual Threads e CompletableFuture.",
-          "mapaMental": "imagens/threads.webp",
+          "mapaMental": "imagens/threads.svg",
           "secoes": [
-            {"titulo": "Threads e ciclo de vida", "conteudo": "Uma thread representa um fluxo de execução. start() agenda a execução de uma nova thread; chamar run() diretamente apenas executa o método na thread atual. join() aguarda a conclusão de outra thread. Os estados Java incluem NEW, RUNNABLE, BLOCKED, WAITING, TIMED_WAITING e TERMINATED."},
-            {"titulo": "Thread Pools", "conteudo": "Um ExecutorService administra a execução de tarefas e pode reutilizar threads. Pools ajudam a controlar recursos e limitar concorrência. É importante encerrar executores quando não forem mais necessários e evitar tarefas bloqueantes em pools inadequados."},
-            {"titulo": "Virtual Threads", "conteudo": "Disponíveis como recurso definitivo a partir do Java 21, Virtual Threads são threads leves gerenciadas pela JVM, especialmente úteis em aplicações com muitas tarefas que aguardam I/O. Elas melhoram a escalabilidade de concorrência, mas não aceleram automaticamente tarefas intensivas em CPU nem aumentam a quantidade de conexões disponíveis no banco.", "codigo": "try (var executor = Executors.newVirtualThreadPerTaskExecutor()) {\n    executor.submit(() -> System.out.println(\"Executando\"));\n}"},
-            {"titulo": "CompletableFuture", "conteudo": "CompletableFuture representa um resultado que pode ficar disponível futuramente e permite compor etapas assíncronas. supplyAsync executa uma tarefa que retorna valor; runAsync executa uma tarefa sem resultado. thenApply transforma um valor; thenCompose encadeia uma operação que retorna outro futuro; thenCombine combina resultados de dois futuros independentes."},
-            {"titulo": "Combinando operações", "conteudo": "thenCombine é adequado quando dois resultados podem ser produzidos independentemente e precisam ser reunidos. thenCompose é adequado quando a próxima operação assíncrona depende do resultado da anterior.", "codigo": "CompletableFuture<String> nome = CompletableFuture.supplyAsync(() -> \"Carlos\");\nCompletableFuture<Integer> total = CompletableFuture.supplyAsync(() -> 3);\nString mensagem = nome.thenCombine(total,\n    (n, t) -> n + \" possui \" + t + \" agendamentos\").join();\nSystem.out.println(mensagem);"},
-            {"titulo": "Falhas e recuperação", "conteudo": "exceptionally permite recuperar uma etapa que terminou excepcionalmente, retornando um valor alternativo. handle recebe tanto o resultado quanto a falha e é executado nos dois cenários. join aguarda a conclusão e, em caso de falha não recuperada, normalmente lança CompletionException. Um fallback deve ser escolhido com cuidado para não mascarar erros reais.", "codigo": "CompletableFuture<Integer> futuro = CompletableFuture\n    .supplyAsync(() -> 20)\n    .handle((valor, erro) -> erro == null ? valor * 2 : 0);\nSystem.out.println(futuro.join()); // 40", "destaque": "Virtual Threads ampliam a capacidade de lidar com espera; CompletableFuture oferece composição de etapas. São ferramentas com propósitos diferentes."}
+            {
+              "titulo": "Threads e ciclo de vida",
+              "conteudo": "Uma thread representa um fluxo de execução. start() agenda a execução de uma nova thread; chamar run() diretamente apenas executa o método na thread atual. join() aguarda a conclusão de outra thread. Os estados Java incluem NEW, RUNNABLE, BLOCKED, WAITING, TIMED_WAITING e TERMINATED."
+            },
+            {
+              "titulo": "Thread Pools",
+              "conteudo": "Um ExecutorService administra a execução de tarefas e pode reutilizar threads. Pools ajudam a controlar recursos e limitar concorrência. É importante encerrar executores quando não forem mais necessários e evitar tarefas bloqueantes em pools inadequados."
+            },
+            {
+              "titulo": "Virtual Threads",
+              "conteudo": "Disponíveis como recurso definitivo a partir do Java 21, Virtual Threads são threads leves gerenciadas pela JVM, especialmente úteis em aplicações com muitas tarefas que aguardam I/O. Elas melhoram a escalabilidade de concorrência, mas não aceleram automaticamente tarefas intensivas em CPU nem aumentam a quantidade de conexões disponíveis no banco.",
+              "codigo": "try (var executor = Executors.newVirtualThreadPerTaskExecutor()) {\n    executor.submit(() -> System.out.println(\"Executando\"));\n}"
+            },
+            {
+              "titulo": "CompletableFuture",
+              "conteudo": "CompletableFuture representa um resultado que pode ficar disponível futuramente e permite compor etapas assíncronas. supplyAsync executa uma tarefa que retorna valor; runAsync executa uma tarefa sem resultado. thenApply transforma um valor; thenCompose encadeia uma operação que retorna outro futuro; thenCombine combina resultados de dois futuros independentes."
+            },
+            {
+              "titulo": "Combinando operações",
+              "conteudo": "thenCombine é adequado quando dois resultados podem ser produzidos independentemente e precisam ser reunidos. thenCompose é adequado quando a próxima operação assíncrona depende do resultado da anterior.",
+              "codigo": "CompletableFuture<String> nome = CompletableFuture.supplyAsync(() -> \"Carlos\");\nCompletableFuture<Integer> total = CompletableFuture.supplyAsync(() -> 3);\nString mensagem = nome.thenCombine(total,\n    (n, t) -> n + \" possui \" + t + \" agendamentos\").join();\nSystem.out.println(mensagem);"
+            },
+            {
+              "titulo": "Falhas e recuperação",
+              "conteudo": "exceptionally permite recuperar uma etapa que terminou excepcionalmente, retornando um valor alternativo. handle recebe tanto o resultado quanto a falha e é executado nos dois cenários. join aguarda a conclusão e, em caso de falha não recuperada, normalmente lança CompletionException. Um fallback deve ser escolhido com cuidado para não mascarar erros reais.",
+              "codigo": "CompletableFuture<Integer> futuro = CompletableFuture\n    .supplyAsync(() -> 20)\n    .handle((valor, erro) -> erro == null ? valor * 2 : 0);\nSystem.out.println(futuro.join()); // 40",
+              "destaque": "Virtual Threads ampliam a capacidade de lidar com espera; CompletableFuture oferece composição de etapas. São ferramentas com propósitos diferentes."
+            }
           ]
         }
       ]

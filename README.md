@@ -14,6 +14,6 @@ Use um servidor HTTP local (por exemplo, `python -m http.server 8000`) e abra `h
 
 ## Atualizar conteúdo
 
-Edite `conteudo.json`, mantendo IDs únicos por assunto. Para adicionar um mapa mental, salve a imagem na pasta `imagens/` e atualize o campo `mapaMental` do assunto. Os caminhos atuais são espaços reservados: até que as imagens sejam adicionadas, a página mostrará um aviso discreto.
+Edite `conteudo.json`, mantendo IDs únicos por assunto. Para adicionar um mapa mental, salve a imagem na pasta `imagens/` e atualize o campo `mapaMental` do assunto. Os cinco assuntos do Módulo 01 possuem mapas SVG vetoriais com layout vertical e texto acessível. A página permite ampliar (100% a 400%), baixar o SVG ou exportar um PNG de 2160 × 3600 pixels no navegador.
 
 Não há backend, login, rastreamento ou dependências externas.
