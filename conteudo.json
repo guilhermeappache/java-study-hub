@@ -1,6 +1,6 @@
 {
   "titulo": "Java Study Hub",
-  "versao": "1.1",
+  "versao": "1.2",
   "modulos": [
     {
       "id": "modulo-01",
@@ -155,6 +155,83 @@
               "conteudo": "exceptionally permite recuperar uma etapa que terminou excepcionalmente, retornando um valor alternativo. handle recebe tanto o resultado quanto a falha e é executado nos dois cenários. join aguarda a conclusão e, em caso de falha não recuperada, normalmente lança CompletionException. Um fallback deve ser escolhido com cuidado para não mascarar erros reais.",
               "codigo": "CompletableFuture<Integer> futuro = CompletableFuture\n    .supplyAsync(() -> 20)\n    .handle((valor, erro) -> erro == null ? valor * 2 : 0);\nSystem.out.println(futuro.join()); // 40",
               "destaque": "Virtual Threads ampliam a capacidade de lidar com espera; CompletableFuture oferece composição de etapas. São ferramentas com propósitos diferentes."
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "modulo-02",
+      "titulo": "Módulo 02 · Memória e Diagnóstico",
+      "assuntos": [
+        {
+          "id": "garbage-collection",
+          "titulo": "Garbage Collection: G1GC, ZGC e Memory Leaks",
+          "resumo": "Entenda alcançabilidade, gerações da Heap, objetos Humongous, coleta automática e Full GC, com experimentos reproduzíveis no Java 21 e interpretação de logs reais.",
+          "mapaMental": "imagens/garbage-collection.svg",
+          "secoes": [
+            {
+              "titulo": "1. O que o Garbage Collector faz",
+              "conteudo": "O Garbage Collector (GC) identifica objetos que não são mais alcançáveis a partir dos GC Roots e recupera sua memória quando necessário. GC Roots incluem referências de pilhas de threads, campos estáticos e referências mantidas pela JVM. Um objeto pode ser alcançável indiretamente por uma cadeia de referências. Atribuir null a uma variável não libera o objeto se outras referências continuarem apontando para ele.",
+              "destaque": "Elegível para coleta ≠ já coletado. A ausência de referências alcançáveis permite recuperar memória; não obriga a JVM a fazer isso imediatamente."
+            },
+            {
+              "titulo": "2. Vazamento lógico de memória (memory leak)",
+              "conteudo": "Em Java, um memory leak pode ocorrer quando objetos que já não são úteis continuam alcançáveis. Uma lista estática ou um serviço de longa duração com cache sem limite retém os elementos adicionados. Mesmo após uma Full GC, objetos ainda alcançáveis permanecem vivos. Soluções incluem limitar o cache, expirar entradas por tempo, remover referências quando não forem necessárias e adotar estruturas com políticas de descarte.",
+              "codigo": "import java.util.ArrayList;\nimport java.util.List;\n\npublic class MemoryLeakLab {\n    private static final List<byte[]> CACHE = new ArrayList<>();\n\n    public static void main(String[] args) throws InterruptedException {\n        int count = 0;\n        while (true) {\n            CACHE.add(new byte[1024 * 1024]);\n            System.out.printf(\"Blocos retidos: %d MB%n\", ++count);\n            Thread.sleep(100);\n        }\n    }\n}",
+              "destaque": "Com -Xmx64m, o cache sem limite acaba provocando OutOfMemoryError: Java heap space. Aumentar a Heap apenas adia o problema se a retenção continuar crescendo."
+            },
+            {
+              "titulo": "3. Eden, Survivor e Old Generation",
+              "conteudo": "No G1GC, objetos comuns geralmente começam em regiões Eden. Objetos que sobrevivem às coletas jovens podem passar por regiões Survivor e, conforme os critérios do coletor, ser promovidos para Old Generation. Promoção é diferente de alocação inicial. Estar na Old não torna um objeto permanentemente vivo; a alcançabilidade continua determinando se ele é elegível para coleta.",
+              "destaque": "O GC não 'tenta excluir' objetos vivos repetidamente. Ele identifica os sobreviventes e decide como gerenciar suas regiões e cópias."
+            },
+            {
+              "titulo": "4. Objetos Humongous no G1GC",
+              "conteudo": "O G1 divide a Heap em regiões. No experimento, cada região tinha 1 MiB. Objetos maiores que metade de uma região são Humongous: um byte[1024 * 1024], com seu cabeçalho, ultrapassa esse limite e é alocado diretamente em regiões especiais pertencentes à geração antiga. Um byte[100 * 1024] não é Humongous nessa configuração e costuma ser alocado na Eden. Alocações Humongous podem disparar ciclos de GC; elas não equivalem a promoções convencionais.",
+              "codigo": "// Com região G1 de 1 MiB:\nCACHE.add(new byte[1024 * 1024]); // Humongous\nCACHE.add(new byte[100 * 1024]);  // Alocação comum",
+              "destaque": "O limite de Humongous depende do tamanho da região G1. Não existe um tamanho universal em bytes para todas as JVMs."
+            },
+            {
+              "titulo": "5. Laboratório: limpar referências sem forçar GC",
+              "conteudo": "O cache abaixo retém no máximo dois arrays antes de clear(). O contador de iterações registra o total criado, não a quantidade ainda retida. O clear() remove as referências da lista, mas não dispara uma coleta. Para comparar tamanhos, mantenha iguais as demais condições de execução.",
+              "codigo": "import java.util.ArrayList;\nimport java.util.List;\n\npublic class MemoryLeakLab {\n    private static final List<byte[]> CACHE = new ArrayList<>();\n\n    public static void main(String[] args) throws InterruptedException {\n        for (int i = 0; i < 100; i++) {\n            CACHE.add(new byte[100 * 1024]);\n            if ((i + 1) % 2 == 0) CACHE.clear();\n            System.out.printf(\"Iteração %d | Retidos: %d%n\", i + 1, CACHE.size());\n            Thread.sleep(100);\n        }\n    }\n}",
+              "destaque": "No log observado com 100 arrays de 100 KiB e sem System.gc(), não houve eventos de coleta. A Heap encerrou com cerca de 12.988 KiB usados: objetos elegíveis podem continuar ocupando memória até uma coleta ocorrer."
+            },
+            {
+              "titulo": "6. Executar com Heap pequena e logs do GC",
+              "conteudo": "A configuração abaixo usa Java 21, Heap inicial de 32 MiB, máxima de 64 MiB e G1GC. O arquivo gc.log permite observar causas, pausas e regiões. Uma Heap comprometida não equivale à quantidade de objetos vivos.",
+              "codigo": "javac MemoryLeakLab.java\njava -Xms32m -Xmx64m -XX:+UseG1GC -Xlog:gc*:file=gc.log:uptime,level,tags MemoryLeakLab",
+              "destaque": "Para inspecionar OutOfMemoryError, também existem -XX:+HeapDumpOnOutOfMemoryError e -XX:HeapDumpPath=./memory.hprof. O diagnóstico detalhado de dumps será abordado em conteúdo posterior."
+            },
+            {
+              "titulo": "7. Comparação dos logs: 1 MiB versus 100 KiB",
+              "conteudo": "No teste de 100 iterações com arrays de 1 MiB, o log mostrou 16 pausas Young GC ligadas a 'G1 Humongous Allocation', com exemplo de 17M->3M(32M) em 5,744 ms e Humongous regions: 14->2. Com arrays de 100 KiB e o mesmo clear() a cada duas iterações, não houve coletas registradas durante aproximadamente 11 segundos; a Heap terminou com 12.988 KiB usados. O volume total alocado caiu de cerca de 100 MiB para 9,77 MiB, além de desaparecer a alocação Humongous. Portanto, não é possível atribuir toda a diferença apenas à categoria dos objetos.",
+              "codigo": "// Log com 1 MiB por array:\nGC(0) Pause Young (Concurrent Start) (G1 Humongous Allocation)\nGC(0) Humongous regions: 14->2\nGC(0) Pause Young ... 17M->3M(32M) 5.744ms\n\n// Log com 100 KiB por array:\n// Nenhuma linha 'Pause Young' ou 'Pause Full' durante o teste.\n// Encerramento: heap total 32768K, used 12988K",
+              "destaque": "Os IDs GC(0), GC(2), etc. podem intercalar ciclos concorrentes. Conte as pausas de coleta, não simplesmente todos os IDs."
+            },
+            {
+              "titulo": "8. System.gc(): solicitação explícita e custo",
+              "conteudo": "Em um terceiro teste, System.gc() foi chamado após cada CACHE.clear(), uma vez a cada duas iterações. O Java 21 com G1GC atendeu as 50 solicitações como Full GC, todas com pausa Stop-The-World. A soma aproximada das pausas foi 299 ms, média de 5,98 ms e maior pausa de 8,45 ms. O mesmo teste com arrays de 100 KiB e sem System.gc() não tinha registrado nenhuma coleta. Em produção, forçar GC periodicamente pode elevar a latência e consumir CPU sem corrigir retenções de objetos.",
+              "codigo": "if ((i + 1) % 2 == 0) {\n    CACHE.clear();\n    System.gc(); // Evite como política periódica em aplicações reais.\n}\n\n// Exemplo do log:\n// GC(0) Pause Full (System.gc()) 3M->0M(32M) 4.747ms",
+              "destaque": "System.gc() é uma solicitação, não uma garantia universal. O comportamento depende do coletor e das opções da JVM. A redução '3M->0M' é arredondada e não significa exatamente zero bytes vivos."
+            },
+            {
+              "titulo": "9. Interpretando regiões e limites do log",
+              "conteudo": "No teste com System.gc(), o primeiro evento mostrou Eden regions: 3->0, Survivor regions: 0->0, Old regions: 0->2 e Humongous regions: 0->0. Isso indica reorganização de regiões, mas não identifica quais instâncias foram movidas. Um log de GC apresenta métricas agregadas; não permite concluir sozinho que uma classe específica foi coletada ou promovida.",
+              "codigo": "GC(0) Eden regions: 3->0(15)\nGC(0) Survivor regions: 0->0(0)\nGC(0) Old regions: 0->2\nGC(0) Humongous regions: 0->0",
+              "destaque": "Para investigar retenções por classe, referências e GC Roots, são necessários instrumentos de diagnóstico mais detalhados."
+            },
+            {
+              "titulo": "10. G1GC versus ZGC e latência",
+              "conteudo": "O G1GC procura equilibrar throughput e pausas, usando regiões e coletas jovens/mistas. O ZGC foi projetado para pausas muito curtas, com grande parte do trabalho concorrente. Se uma API apresenta p99 elevado e pausas de GC relevantes, primeiro confirme a correlação com logs e métricas. Compare os coletores sob carga representativa antes de alterar parâmetros. Nem toda lentidão é causada pelo GC.",
+              "destaque": "Uma pausa de GC de 300 ms não prova, isoladamente, a causa de uma latência p99 de 800 ms. Correlacione timestamps, tráfego, CPU, I/O e perfil de alocações."
+            },
+            {
+              "titulo": "11. Próximo tópico: diagnóstico com jcmd e Heap Dumps",
+              "conteudo": "A continuação do estudo será dedicada a localizar objetos retidos usando jcmd, histograma de classes, Heap Dumps e análise de GC Roots e retained heap. Esse tópico ainda não foi desenvolvido neste material.",
+              "codigo": "jcmd -l\njcmd <pid> GC.heap_info\njcmd <pid> GC.class_histogram\njcmd <pid> GC.heap_dump memory.hprof",
+              "destaque": "Alguns comandos de diagnóstico podem impactar a aplicação. Planeje a coleta de evidências, especialmente em produção."
             }
           ]
         }
