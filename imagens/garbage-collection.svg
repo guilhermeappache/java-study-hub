@@ -1,0 +1,54 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="2160" height="3600" viewBox="0 0 2160 3600">
+<rect width="2160" height="3600" fill="#0b1120"/>
+<style>text{font-family:Arial,Helvetica,sans-serif;fill:#eef4ff} .title{font-size:104px;font-weight:bold}.sub{font-size:43px;fill:#a7b7cc}.head{font-size:58px;font-weight:bold;fill:#61d5bf}.body{font-size:42px}.small{font-size:36px;fill:#a7b7cc}.panel{fill:#142137;stroke:#33475e;stroke-width:3;rx:32}.line{stroke:#61d5bf;stroke-width:8;opacity:.75}</style>
+<text x="1080" y="160" text-anchor="middle" class="title">GARBAGE COLLECTION</text>
+<text x="1080" y="238" text-anchor="middle" class="sub">Java 21 · Heap · G1GC · ZGC · Memory Leaks</text>
+<rect x="140" y="315" width="1880" height="310" class="panel"/>
+<text x="200" y="395" class="head">ALCANÇABILIDADE</text>
+<text x="200" y="465" class="body">GC Roots → referências diretas ou indiretas → objetos vivos</text>
+<text x="200" y="525" class="body">Sem caminho a partir de um GC Root → elegível para coleta</text>
+<text x="200" y="580" class="small">Elegível não significa imediatamente recuperado.</text>
+<path d="M1080 625V685" class="line"/>
+<rect x="140" y="685" width="1880" height="405" class="panel"/>
+<text x="200" y="765" class="head">GERAÇÕES E PROMOÇÃO</text>
+<rect x="215" y="820" width="470" height="120" rx="20" fill="#0d605b"/><text x="450" y="895" text-anchor="middle" class="body">EDEN</text>
+<path d="M690 880H820" class="line"/>
+<rect x="825" y="820" width="470" height="120" rx="20" fill="#24486e"/><text x="1060" y="895" text-anchor="middle" class="body">SURVIVOR</text>
+<path d="M1300 880H1430" class="line"/>
+<rect x="1435" y="820" width="470" height="120" rx="20" fill="#624478"/><text x="1670" y="895" text-anchor="middle" class="body">OLD</text>
+<text x="200" y="1010" class="body">Sobrevivência pode levar à promoção; não é obrigatória.</text>
+<text x="200" y="1060" class="small">Objetos na Old também podem se tornar elegíveis para coleta.</text>
+<path d="M1080 1090V1150" class="line"/>
+<rect x="140" y="1150" width="1880" height="340" class="panel"/>
+<text x="200" y="1230" class="head">G1GC E OBJETOS HUMONGOUS</text>
+<text x="200" y="1300" class="body">Região de 1 MiB → Humongous se objeto &gt; 512 KiB</text>
+<text x="200" y="1360" class="body">byte[1 MiB] → regiões Humongous (Old)</text>
+<text x="200" y="1420" class="body">byte[100 KiB] → alocação normal, geralmente Eden</text>
+<path d="M1080 1490V1550" class="line"/>
+<rect x="140" y="1550" width="1880" height="460" class="panel"/>
+<text x="200" y="1630" class="head">EXPERIMENTOS COM -Xms32m -Xmx64m</text>
+<text x="200" y="1720" class="body">100 × 1 MiB, com clear(): 16 Young GCs</text>
+<text x="200" y="1795" class="body">100 × 100 KiB, com clear(): 0 coletas</text>
+<text x="200" y="1870" class="body">100 × 100 KiB, com System.gc(): 50 Full GCs</text>
+<text x="200" y="1940" class="small">As pausas das 50 Full GCs somaram cerca de 299 ms.</text>
+<path d="M1080 2010V2070" class="line"/>
+<rect x="140" y="2070" width="1880" height="410" class="panel"/>
+<text x="200" y="2150" class="head">MEMORY LEAK</text>
+<text x="200" y="2230" class="body">Cache estático ou singleton retém objetos sem necessidade.</text>
+<text x="200" y="2300" class="body">Full GC não remove objetos ainda alcançáveis.</text>
+<text x="200" y="2370" class="body">Soluções: limite, expiração, descarte e revisão das referências.</text>
+<path d="M1080 2480V2540" class="line"/>
+<rect x="140" y="2540" width="1880" height="380" class="panel"/>
+<text x="200" y="2620" class="head">LOGS E DESEMPENHO</text>
+<text x="200" y="2700" class="body">17M→3M(32M): ocupação antes → depois (Heap total)</text>
+<text x="200" y="2770" class="body">Pause Young / Pause Full: tipo e duração da pausa</text>
+<text x="200" y="2840" class="body">G1GC × ZGC: compare latência sob carga real.</text>
+<path d="M1080 2920V2980" class="line"/>
+<rect x="140" y="2980" width="1880" height="410" class="panel"/>
+<text x="200" y="3060" class="head">PRINCÍPIOS PARA LEMBRAR</text>
+<text x="200" y="3140" class="body">clear() remove referências; não força GC.</text>
+<text x="200" y="3210" class="body">System.gc() solicita coleta; pode causar pausas.</text>
+<text x="200" y="3280" class="body">Log agregado não identifica instâncias específicas.</text>
+<text x="200" y="3340" class="small">Próxima etapa: jcmd, histogramas e Heap Dumps.</text>
+<text x="1080" y="3520" text-anchor="middle" class="sub">JAVA STUDY HUB · MAPA MENTAL</text>
+</svg>
