@@ -1,6 +1,6 @@
 {
   "titulo": "Java Study Hub",
-  "versao": "1.2",
+  "versao": "1.3",
   "modulos": [
     {
       "id": "modulo-01",
@@ -167,7 +167,7 @@
         {
           "id": "garbage-collection",
           "titulo": "Garbage Collection: G1GC, ZGC e Memory Leaks",
-          "resumo": "Entenda alcançabilidade, gerações da Heap, objetos Humongous, coleta automática e Full GC, com experimentos reproduzíveis no Java 21 e interpretação de logs reais.",
+          "resumo": "GC Roots, vazamentos, G1GC/ZGC, jcmd, Heap Dump, Shallow/Retained Heap, Dominator Tree e escopos Spring até prototype injetado em singleton.",
           "mapaMental": "imagens/garbage-collection.svg",
           "secoes": [
             {
@@ -228,10 +228,38 @@
               "destaque": "Uma pausa de GC de 300 ms não prova, isoladamente, a causa de uma latência p99 de 800 ms. Correlacione timestamps, tráfego, CPU, I/O e perfil de alocações."
             },
             {
-              "titulo": "11. Próximo tópico: diagnóstico com jcmd e Heap Dumps",
-              "conteudo": "A continuação do estudo será dedicada a localizar objetos retidos usando jcmd, histograma de classes, Heap Dumps e análise de GC Roots e retained heap. Esse tópico ainda não foi desenvolvido neste material.",
-              "codigo": "jcmd -l\njcmd <pid> GC.heap_info\njcmd <pid> GC.class_histogram\njcmd <pid> GC.heap_dump memory.hprof",
-              "destaque": "Alguns comandos de diagnóstico podem impactar a aplicação. Planeje a coleta de evidências, especialmente em produção."
+              "titulo": "11. jcmd: identificação e histograma de classes",
+              "conteudo": "jcmd é uma ferramenta do JDK para inspecionar uma JVM em execução. jcmd -l lista processos Java visíveis; GC.heap_info exibe informações da Heap; GC.class_histogram apresenta contagem de instâncias e bytes por classe em um instante. Um número alto de String, byte[] ou HashMap$Node não comprova memory leak. Compare métricas sob condições semelhantes e investigue a retenção. A execução do histograma pode induzir coleta e pausas, dependendo das opções e da JVM.",
+              "codigo": "jcmd -l\njcmd 12345 GC.heap_info\njcmd 12345 GC.class_histogram"
+            },
+            {
+              "titulo": "12. Heap Dump e caminhos até GC Roots",
+              "conteudo": "Um Heap Dump é um instantâneo dos objetos e das referências da JVM, não um log temporal. Ferramentas como Eclipse MAT permitem inspecionar coleções, caminhos até GC Roots e objetos retidos. Um dump isolado não demonstra crescimento ao longo do tempo: para isso, compare capturas ou métricas de momentos diferentes. A retenção só configura vazamento quando os objetos já não são necessários. Em produção, dumps podem causar pausas, consumir muito disco e conter informações sensíveis.",
+              "codigo": "jcmd 12345 GC.heap_dump /tmp/heap.hprof"
+            },
+            {
+              "titulo": "13. Shallow Heap e Retained Heap",
+              "conteudo": "Shallow Heap mede a memória ocupada diretamente por um objeto, sem incluir os objetos referenciados. Retained Heap estima a memória que deixaria de ser alcançável se o objeto fosse removido, incluindo apenas objetos que dependem exclusivamente dele. São duas medidas do mesmo instante, não presente e futuro. Um ArrayList pequeno pode reter um array interno e milhares de byte[], somando aproximadamente 1 GB. Referências alternativas podem reduzir o conjunto exclusivamente retido.",
+              "codigo": "private static final List<byte[]> CACHE = new ArrayList<>();\nvoid gerar() { CACHE.add(new byte[10_000_000]); }\n// 100 chamadas retêm aproximadamente 1 GB em arrays."
+            },
+            {
+              "titulo": "14. Dominator Tree: o que retém e por quê",
+              "conteudo": "Na Dominator Tree, A domina B quando todo caminho de uma GC Root até B passa por A. Investigue objetos com alto Retained Heap para localizar a cadeia de retenção e a origem de referências indevidas. Exemplo hipotético: Empresa com 850 MB retidos e seu ArrayList com 840 MB. A lista mostra quais dados estão acumulados; investigar Empresa e suas raízes ajuda a descobrir por que permanecem alcançáveis. O maior Retained Heap é uma pista, não prova de vazamento."
+            },
+            {
+              "titulo": "15. Cache sem expiração e serviços de longa duração",
+              "conteudo": "Uma coleção mantida por um serviço Spring singleton pode crescer indefinidamente quando não há política de expiração, limite ou remoção. Aumentar -Xmx pode apenas adiar OutOfMemoryError. Se o negócio exige somente os últimos sete dias, remova entradas antigas conforme essa regra. A correção depende do ciclo de vida e da utilidade dos dados. Trocar ArrayList por LinkedList ou ConcurrentHashMap não elimina a retenção. ArrayList também não é thread-safe para escrita concorrente.",
+              "codigo": "@Service\npublic class EmpresaService {\n    private final List<Empresa> empresas = new ArrayList<>();\n    public void adicionar(Empresa empresa) { empresas.add(empresa); }\n}"
+            },
+            {
+              "titulo": "16. @Component, @Service e escopo padrão singleton",
+              "conteudo": "@Component registra um componente genérico gerenciado pelo Spring; @Service é uma especialização semântica para a camada de serviços. @Repository e @Controller também são estereótipos, e @RestController combina @Controller com @ResponseBody. Sem @Scope explícito, o escopo padrão é singleton: uma instância por definição de bean em cada contêiner Spring. Em geral, a instância permanece alcançável enquanto o contexto estiver ativo. Singleton não implica thread-safety; evite estado mutável compartilhado sem controle.",
+              "codigo": "@Service // singleton por padrão\npublic class EmpresaService { }\n\n@Service\n@Scope(\"singleton\")\npublic class OutroService { }"
+            },
+            {
+              "titulo": "17. @Scope(\"prototype\") e injeção em singleton",
+              "conteudo": "No escopo prototype, cada solicitação de bean ao contêiner cria uma nova instância. Isso não significa uma instância por chamada de método nem liberação automática pelo GC. Se um bean prototype for injetado diretamente no construtor de um singleton, o singleton guarda aquela mesma instância durante as chamadas seguintes. Um contador de instância incrementado três vezes exibirá 1, 2, 3. O Spring não destrói automaticamente beans prototype após o uso; a coleta depende da alcançabilidade.",
+              "codigo": "@Service\n@Scope(\"prototype\")\nclass ProcessamentoService {\n    private int contador;\n    void executar() { System.out.println(++contador); }\n}\n\n@Service\nclass EmpresaService {\n    private final ProcessamentoService processamento;\n    EmpresaService(ProcessamentoService p) { this.processamento = p; }\n    void processar() { processamento.executar(); }\n}\n// Três chamadas sequenciais de processar(): 1, 2, 3"
             }
           ]
         }
