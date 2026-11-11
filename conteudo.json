@@ -1,6 +1,6 @@
 {
   "titulo": "Java Study Hub",
-  "versao": "1.4",
+  "versao": "1.5",
   "modulos": [
     {
       "id": "modulo-01",
@@ -277,6 +277,48 @@
               "titulo": "20. Fechamento: conceitos e critérios de diagnóstico",
               "conteudo": "Resumo da unidade: (a) GC recupera objetos não alcançáveis, sem garantir coleta imediata; (b) G1GC e ZGC têm características diferentes de latência e gerenciamento; (c) logs mostram eventos e pausas, não a identidade de todos os objetos; (d) [B significa byte[]; (e) histogramas revelam quantidades e tamanhos por classe; (f) Heap Dumps e Path to GC Roots revelam referências e permitem analisar retenção; (g) caches e beans de longa duração precisam de política de ciclo de vida. Critério de conclusão: conseguir distinguir alocação normal de retenção indevida, interpretar um histograma e escolher o próximo instrumento de diagnóstico sem repetir a explicação básica sobre GC Roots.",
               "destaque": "Unidade 06 concluída. Próxima unidade planejada: Collections Framework e análise de complexidade; seu escopo será definido antes do início."
+            }
+          ]
+        },
+        {
+          "id": "collections-framework",
+          "titulo": "Java Collections Framework",
+          "resumo": "List, Set, Map, Queue; ArrayList, LinkedList, HashSet, LinkedHashSet, TreeSet, HashMap, LinkedHashMap, TreeMap e Big O.",
+          "secoes": [
+            {
+              "titulo": "1. Interfaces e contratos: List, Set, Queue e Map",
+              "conteudo": "List mantém ordem posicional, permite duplicatas e oferece acesso por índice. Set representa elementos únicos conforme a semântica de igualdade da implementação. Queue organiza elementos para processamento, frequentemente FIFO, dependendo da implementação. Map associa chaves únicas a valores que podem se repetir; Map não estende Collection, embora ofereça visões keySet(), values() e entrySet(). Prefira declarar variáveis pela interface e selecionar a implementação conforme os requisitos.",
+              "codigo": "List<String> nomes = new ArrayList<>();\nSet<String> codigos = new HashSet<>();\nQueue<String> tarefas = new ArrayDeque<>();\nMap<Long, String> produtos = new HashMap<>();",
+              "destaque": "List aceita duplicatas; Set não; Map tem chaves únicas; Queue representa uma política de processamento."
+            },
+            {
+              "titulo": "2. ArrayList versus LinkedList",
+              "conteudo": "ArrayList usa um array redimensionável: get(indice) é O(1), inclusão ao final é O(1) amortizado e inserir/remover no início ou meio pode deslocar elementos, O(n). LinkedList usa nós duplamente encadeados: get(indice) é O(n); operações nas extremidades são O(1), e inserir/remover junto a um nó já localizado é O(1), mas encontrar a posição por índice custa O(n). ArrayList costuma ser a escolha padrão para listas, pela localidade de memória e menor sobrecarga; para filas e deques, ArrayDeque costuma ser preferível a LinkedList.",
+              "codigo": "List<String> array = new ArrayList<>();\nList<String> ligada = new LinkedList<>();\narray.add(\"Java\");\nligada.add(\"Java\");\nSystem.out.println(array.get(0)); // acesso direto ao array interno",
+              "destaque": "Mesma interface não significa mesmo custo: ArrayList.get(i) O(1); LinkedList.get(i) O(n)."
+            },
+            {
+              "titulo": "3. HashSet, LinkedHashSet e TreeSet",
+              "conteudo": "Todas implementam Set e evitam elementos equivalentes. HashSet não garante ordem e tem add/remove/contains O(1) em média. LinkedHashSet preserva a ordem de inserção, com sobrecarga adicional de memória e operações O(1) em média. TreeSet mantém os elementos classificados por ordem natural ou Comparator e tem operações O(log n). TreeSet usa compareTo/Comparator para determinar equivalência: comparação zero impede a inclusão. Não confunda ordem de inserção com ordem de classificação.",
+              "codigo": "Set<Integer> a = new HashSet<>();\nSet<Integer> b = new LinkedHashSet<>();\nSet<Integer> c = new TreeSet<>();\nfor (int n : new int[]{50, 20, 80, 20, 10}) {\n    a.add(n); b.add(n); c.add(n);\n}\nSystem.out.println(b); // [50, 20, 80, 10]\nSystem.out.println(c); // [10, 20, 50, 80]",
+              "destaque": "Sem ordem: HashSet. Ordem de inserção: LinkedHashSet. Ordem crescente/classificação: TreeSet."
+            },
+            {
+              "titulo": "4. HashMap, LinkedHashMap e TreeMap",
+              "conteudo": "Map armazena pares chave-valor. Inserir novamente uma chave substitui seu valor; valores podem se repetir. HashMap não garante ordem e oferece get/put/remove O(1) em média. LinkedHashMap preserva a ordem de inserção por padrão e pode ser configurado para ordem de acesso, útil em caches. TreeMap mantém chaves ordenadas por ordem natural ou Comparator, com get/put/remove O(log n), além de firstKey(), lastKey() e ceilingKey(). A ordenação do TreeMap não equivale à ordem de cadastro.",
+              "codigo": "Map<Integer, String> historico = new LinkedHashMap<>();\nhistorico.put(30, \"Mouse\");\nhistorico.put(10, \"Notebook\");\nhistorico.put(20, \"Monitor\");\nSystem.out.println(historico.keySet()); // [30, 10, 20]\nMap<Integer, String> ordenado = new TreeMap<>(historico);\nSystem.out.println(ordenado.keySet()); // [10, 20, 30]",
+              "destaque": "Chaves únicas, valores repetíveis. LinkedHashMap ordena por inserção; TreeMap classifica pelas chaves."
+            },
+            {
+              "titulo": "5. Big O aplicado às coleções",
+              "conteudo": "Big O descreve como o custo de uma operação cresce com o tamanho n da entrada, não seu tempo exato em milissegundos. O(1) é constante (acesso por índice em ArrayList, get de HashMap em média); O(log n) cresce lentamente com a entrada (operações em TreeSet/TreeMap); O(n) cresce proporcionalmente (busca por valor em ArrayList, acesso por índice em LinkedList); O(n²) aparece, por exemplo, ao comparar cada item com todos os itens em dois laços aninhados. O(1) médio de estruturas hash não é garantia de tempo constante em qualquer cenário; colisões, redimensionamento e qualidade do hash importam.",
+              "codigo": "List<String> itens = new ArrayList<>();\n// get(indice): O(1)\n// contains(valor): O(n)\nSet<String> unicos = new HashSet<>();\n// contains(valor): O(1) em média\nSet<String> ordenados = new TreeSet<>();\n// contains(valor): O(log n)",
+              "destaque": "Avalie a operação predominante e o requisito de ordenação, não apenas a interface."
+            },
+            {
+              "titulo": "6. Critérios de escolha e exercício integrador",
+              "conteudo": "Cenário: (1) catálogo com duplicatas, ordem de cadastro e acesso frequente por índice: ArrayList; (2) identificadores únicos sem ordenação e com consultas frequentes de existência: HashSet; (3) histórico de atualizações por código, preservando a ordem de inserção das chaves: LinkedHashMap; (4) relatório de códigos únicos automaticamente classificados em ordem crescente: TreeSet. TreeSet atende à unicidade no cenário 2, mas mantém ordenação desnecessária e custa O(log n). HashSet não atende à ordenação automática no cenário 4. A escolha adequada equilibra comportamento, custo de execução e memória.",
+              "destaque": "Decisão técnica: primeiro requisitos (duplicatas, ordem, chave-valor, índice), depois complexidade e consumo de memória. Unidade 07 concluída."
             }
           ]
         }
