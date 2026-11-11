@@ -1,6 +1,6 @@
 {
   "titulo": "Java Study Hub",
-  "versao": "1.3",
+  "versao": "1.4",
   "modulos": [
     {
       "id": "modulo-01",
@@ -260,6 +260,23 @@
               "titulo": "17. @Scope(\"prototype\") e injeção em singleton",
               "conteudo": "No escopo prototype, cada solicitação de bean ao contêiner cria uma nova instância. Isso não significa uma instância por chamada de método nem liberação automática pelo GC. Se um bean prototype for injetado diretamente no construtor de um singleton, o singleton guarda aquela mesma instância durante as chamadas seguintes. Um contador de instância incrementado três vezes exibirá 1, 2, 3. O Spring não destrói automaticamente beans prototype após o uso; a coleta depende da alcançabilidade.",
               "codigo": "@Service\n@Scope(\"prototype\")\nclass ProcessamentoService {\n    private int contador;\n    void executar() { System.out.println(++contador); }\n}\n\n@Service\nclass EmpresaService {\n    private final ProcessamentoService processamento;\n    EmpresaService(ProcessamentoService p) { this.processamento = p; }\n    void processar() { processamento.executar(); }\n}\n// Três chamadas sequenciais de processar(): 1, 2, 3"
+            },
+            {
+              "titulo": "18. Notação de arrays no histograma: [B, [I e [[B",
+              "conteudo": "O nome exibido em GC.class_histogram e Class.getName() usa uma notação especial para classes de arrays. [ indica uma dimensão; B identifica o primitivo byte; I identifica int. Assim, [B é byte[], [I é int[] e [[B é byte[][]. Para arrays de objetos, [Ljava.lang.String; identifica String[]. A notação não indica o tamanho do array: new byte[3][1024] continua tendo nome [[B. Uma classe comum, como String, retorna java.lang.String em getClass().getName(). Nos descritores de bytecode, referências a classes usam barras, como Ljava/lang/String;, enquanto getName() usa pontos nos nomes binários. Um grande volume de [B pode corresponder a buffers, arquivos, mensagens ou outros dados binários; por si só, não comprova vazamento.",
+              "codigo": "System.out.println(new byte[10].getClass().getName());       // [B\nSystem.out.println(new int[10].getClass().getName());        // [I\nSystem.out.println(new byte[3][1024].getClass().getName()); // [[B\nSystem.out.println(new String[2].getClass().getName());     // [Ljava.lang.String;\nSystem.out.println(\"Hello World\".getClass().getName());   // java.lang.String",
+              "destaque": "[B significa byte[], não bytecode. No histograma, #instances é a quantidade de arrays e #bytes é a memória ocupada por essas instâncias."
+            },
+            {
+              "titulo": "19. Diagnóstico com jcmd: roteiro objetivo",
+              "conteudo": "Para diagnosticar consumo crescente de Heap: (1) identifique o PID com jcmd -l; (2) consulte GC.heap_info; (3) examine GC.class_histogram para localizar tipos com muitas instâncias ou alto consumo; (4) correlacione com métricas e evolução temporal; (5) quando necessário, gere Heap Dump e examine Path to GC Roots e Retained Heap no Eclipse MAT. O histograma responde quais tipos ocupam memória; o dump ajuda a identificar as cadeias de referência responsáveis pela retenção. Não se conclui memory leak apenas pela quantidade de instâncias. Histograma e dump podem gerar pausas e impacto operacional; dumps exigem disco e proteção contra exposição de dados sensíveis.",
+              "codigo": "jcmd -l\njcmd 12345 GC.heap_info\njcmd 12345 GC.class_histogram\njcmd 12345 GC.heap_dump /tmp/memoria.hprof",
+              "destaque": "Investigue primeiro a evidência de retenção, depois a causa. Evite forçar System.gc() como tentativa de corrigir objetos ainda alcançáveis."
+            },
+            {
+              "titulo": "20. Fechamento: conceitos e critérios de diagnóstico",
+              "conteudo": "Resumo da unidade: (a) GC recupera objetos não alcançáveis, sem garantir coleta imediata; (b) G1GC e ZGC têm características diferentes de latência e gerenciamento; (c) logs mostram eventos e pausas, não a identidade de todos os objetos; (d) [B significa byte[]; (e) histogramas revelam quantidades e tamanhos por classe; (f) Heap Dumps e Path to GC Roots revelam referências e permitem analisar retenção; (g) caches e beans de longa duração precisam de política de ciclo de vida. Critério de conclusão: conseguir distinguir alocação normal de retenção indevida, interpretar um histograma e escolher o próximo instrumento de diagnóstico sem repetir a explicação básica sobre GC Roots.",
+              "destaque": "Unidade 06 concluída. Próxima unidade planejada: Collections Framework e análise de complexidade; seu escopo será definido antes do início."
             }
           ]
         }
