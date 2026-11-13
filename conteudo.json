@@ -323,6 +323,87 @@
           ]
         }
       ]
+    },
+    {
+      "id": "modulo-03",
+      "titulo": "Módulo 03 · Spring Framework e Transações",
+      "assuntos": [
+        {
+          "id": "spring-proxies-transacoes",
+          "titulo": "Spring AOP, Proxies e Gerenciamento de Transações",
+          "resumo": "Arquitetura de beans e proxies, chamadas internas, @Transactional, propagação REQUIRED/REQUIRES_NEW, rollback-only, exceções, commits independentes e laboratório reproduzível.",
+          "mapaMental": "imagens/spring-proxies-transacoes.svg",
+          "secoes": [
+            {
+              "titulo": "1. Visão arquitetural: container, bean, proxy e target",
+              "conteudo": "O ApplicationContext é o container IoC que instancia, configura e gerencia beans. Um bean é um objeto gerenciado pelo Spring. Um proxy AOP é outro objeto Java, exposto como referência do bean quando a infraestrutura de AOP precisa interceptar chamadas. O target é o objeto que executa a lógica de negócio. O proxy executa uma cadeia de interceptadores (advice) ao redor da chamada ao target. A JVM executa o bytecode de todos esses objetos; Spring organiza sua criação e a interceptação. Nem todo bean tem proxy: @Service, @Component e @RestController não criam proxies automaticamente.",
+              "codigo": "@Service\npublic class PedidoService {\n    @Transactional\n    public void criarPedido() { /* lógica de negócio */ }\n}\n\n@RestController\nclass PedidoController {\n    private final PedidoService pedidoService;\n    PedidoController(PedidoService pedidoService) {\n        this.pedidoService = pedidoService;\n    }\n    // A referência injetada pode ser um proxy do PedidoService.\n}",
+              "destaque": "Distinção central: bean gerenciado ≠ necessariamente proxy; proxy ≠ target. O proxy intercepta a chamada, mas não substitui o código de negócio."
+            },
+            {
+              "titulo": "2. JDK Dynamic Proxy e CGLIB",
+              "conteudo": "Spring AOP é baseado em proxies. JDK Dynamic Proxy implementa interfaces do alvo; CGLIB cria uma subclasse do alvo. Métodos final não podem ser sobrescritos pelo CGLIB; métodos private não são interceptáveis por esse mecanismo. A possibilidade de interceptação também depende da visibilidade, da configuração e da versão do Spring. No Spring Boot, a configuração padrão costuma favorecer proxies baseados em classe, mas não se deve presumir isso em toda aplicação. Spring AOP intercepta execuções de métodos acessadas através do proxy; AspectJ weaving é um mecanismo diferente.",
+              "destaque": "Para diagnosticar: AopUtils.isAopProxy(bean), AopUtils.isJdkDynamicProxy(bean) e AopUtils.isCglibProxy(bean)."
+            },
+            {
+              "titulo": "3. Fluxo de uma chamada transacional",
+              "conteudo": "1) O chamador invoca a referência injetada. 2) Se a referência é um proxy transacional, o TransactionInterceptor consulta os atributos da transação. 3) O PlatformTransactionManager obtém ou cria o contexto transacional conforme propagação. 4) O proxy invoca o target. 5) No retorno ou exceção, aplica as regras de commit/rollback e encerra ou devolve o controle ao contexto existente. Um proxy interno que participa de uma transação já existente não é necessariamente responsável pelo commit físico final.",
+              "destaque": "Passar por dois proxies não significa abrir duas transações físicas."
+            },
+            {
+              "titulo": "4. Self-invocation: por que this ignora o proxy",
+              "conteudo": "Quando um método do target chama outro método do mesmo objeto por this.metodo(), a chamada não passa novamente pela referência de proxy. Logo, um @Transactional colocado apenas no método interno não tem seus atributos aplicados nessa chamada. Se o método externo já iniciou uma transação, ela continua ativa durante o método interno. A regra diz respeito à interceptação, não ao desaparecimento da transação.",
+              "codigo": "@Service\npublic class PedidoService {\n    @Transactional\n    public void criarPedido() {\n        this.salvarPedido(); // chamada interna: sem nova interceptação\n    }\n\n    @Transactional(propagation = Propagation.REQUIRES_NEW)\n    public void salvarPedido() {\n        // REQUIRES_NEW NÃO é aplicado via this.salvarPedido()\n    }\n}",
+              "destaque": "Uma solução habitual é separar a operação interna em outro bean Spring e chamá-lo pela referência injetada. Evite contornar a arquitetura apenas para forçar o proxy."
+            },
+            {
+              "titulo": "5. REQUIRED: transação compartilhada",
+              "conteudo": "Propagation.REQUIRED é o padrão de @Transactional. Se não existe transação, inicia uma; se já existe, participa dela. Duas operações em beans diferentes, cada qual interceptada por proxy, podem compartilhar a mesma transação física. O commit físico ocorre no limite da transação iniciadora. Uma exceção unchecked que sai de um método transacional participante costuma marcar a transação compartilhada como rollback-only pelas regras padrão.",
+              "codigo": "@Service\nclass PagamentoService {\n    @Transactional // REQUIRED\n    public void processar() { /* participa da transação existente */ }\n}\n\n@Service\nclass PedidoService {\n    private final PagamentoService pagamento;\n    PedidoService(PagamentoService pagamento) { this.pagamento = pagamento; }\n\n    @Transactional\n    public void criar() { pagamento.processar(); }\n}",
+              "destaque": "REQUIRED significa participar da mesma transação quando já houver uma, não 'criar transação a cada anotação'."
+            },
+            {
+              "titulo": "6. REQUIRES_NEW: suspensão e independência",
+              "conteudo": "Propagation.REQUIRES_NEW sempre usa uma transação física independente. Se existir transação externa, ela é suspensa enquanto a interna executa e depois retomada. A transação interna pode confirmar mesmo que a externa posteriormente faça rollback. Da mesma forma, uma falha na interna não condena automaticamente a externa: se a exceção for capturada pelo chamador externo e a transação externa não estiver rollback-only, ela pode confirmar. Há custo de recursos: uma conexão adicional pode ser necessária enquanto a externa mantém a sua.",
+              "codigo": "@Transactional\npublic void criarPedido() {\n    salvarPedido();\n    try {\n        auditoriaService.registrar(); // outro bean, REQUIRES_NEW\n    } catch (RuntimeException ex) {\n        // avaliar regra de negócio e registrar falha\n    }\n}\n\n// No bean AuditoriaService:\n@Transactional(propagation = Propagation.REQUIRES_NEW)\npublic void registrar() { /* operação independente */ }",
+              "destaque": "REQUIRES_NEW não é garantia de consistência entre operações independentes. Use quando a independência é uma decisão explícita de negócio."
+            },
+            {
+              "titulo": "7. RuntimeException, checked exceptions e regras de rollback",
+              "conteudo": "Por padrão, o Spring faz rollback para RuntimeException e Error que escapam pelo limite do método interceptado. Exceções checked não provocam rollback automaticamente nas configurações clássicas; isso pode ser alterado por rollbackFor, noRollbackFor ou configuração global. O lançamento de uma exceção, por si só, não significa que o TransactionInterceptor a observou. Uma exceção capturada dentro do próprio método, antes de atravessar o proxy, pode permitir commit se a transação permanecer válida.",
+              "codigo": "@Transactional(rollbackFor = IOException.class)\npublic void importar() throws IOException {\n    // IOException escapando deste método provoca rollback\n}\n\n@Transactional\npublic void processar() {\n    try {\n        validar(); // chamada interna\n    } catch (IllegalArgumentException ex) {\n        // exceção tratada; não houve escape pelo proxy externo\n    }\n}",
+              "destaque": "Capturar uma exceção não 'limpa' rollback-only. Erros de banco, JPA ou marcações explícitas podem impedir commit mesmo com try-catch."
+            },
+            {
+              "titulo": "8. rollback-only e UnexpectedRollbackException",
+              "conteudo": "Quando um método transacional participante de REQUIRED falha com uma exceção que exige rollback, o interceptor pode marcar a transação compartilhada como rollback-only. Mesmo que o método externo capture a exceção, a marcação permanece. Quando o método externo tenta confirmar, o Spring normalmente faz rollback e sinaliza UnexpectedRollbackException, evitando que o chamador pense que houve commit. A condição decisiva é o estado transacional, não apenas a existência de try-catch.",
+              "codigo": "@Transactional\npublic void criar() {\n    try {\n        pagamentoService.processar(); // REQUIRED, outro bean\n    } catch (RuntimeException ex) {\n        // Java continua, mas a transação pode estar rollback-only\n    }\n    // tentativa de commit pode terminar em UnexpectedRollbackException\n}",
+              "destaque": "Uma RuntimeException capturada antes de qualquer interceptor transacional vê-la não marca automaticamente rollback-only. Mas falhas de recursos podem marcar rollback independentemente disso."
+            },
+            {
+              "titulo": "9. Exceção e propagação são dimensões diferentes",
+              "conteudo": "Propagação define a relação entre transações; o fluxo de exceções define o que chega aos chamadores e interceptadores. Em REQUIRES_NEW, uma exceção unchecked que escapa do método interno provoca rollback da transação interna. Se a exceção também escapar do método externo transacional, poderá provocar rollback externo; se for capturada pelo externo, ele poderá confirmar, desde que esteja válido. Em REQUIRED, a transação compartilhada pode estar marcada rollback-only antes de o externo capturar a exceção.",
+              "destaque": "Pergunta de diagnóstico: a exceção atravessou qual proxy? Qual transação estava ativa? Algum participante marcou rollback-only?"
+            },
+            {
+              "titulo": "10. Auditoria, persistência e limites reais",
+              "conteudo": "Registrar auditoria com REQUIRES_NEW pode ser adequado quando o registro deve sobreviver ao rollback da operação principal. Não é uma regra universal: a auditoria pode precisar refletir apenas eventos confirmados, ou exigir consistência com a transação principal. Chamadas HTTP, mensageria e efeitos externos não são automaticamente revertidos por rollback do banco. Para publicação confiável de eventos associados a alterações no banco, considere Transactional Outbox e processamento idempotente.",
+              "destaque": "Nunca presuma que @Transactional desfaz envio de e-mail, chamadas REST ou publicação externa."
+            },
+            {
+              "titulo": "11. Laboratório reproduzível: observar transações",
+              "conteudo": "Crie dois @Service e um @RestController ou teste de integração com Spring Boot, Spring Data JPA e H2. Ative logs de transação e compare três cenários: (A) self-invocation com exceção capturada no externo; (B) REQUIRED entre beans com exceção capturada no externo; (C) REQUIRES_NEW entre beans com exceção capturada no externo. Use registros persistidos e consultas após a chamada para validar o resultado. Para evitar interpretações falsas, invoque o serviço a partir de um teste não transacional; @Transactional no teste pode alterar o comportamento.",
+              "codigo": "logging.level.org.springframework.transaction=TRACE\nlogging.level.org.springframework.orm.jpa.JpaTransactionManager=DEBUG\nlogging.level.org.springframework.transaction.interceptor=TRACE\n\n// Inspecionar em pontos estratégicos:\nboolean ativa = TransactionSynchronizationManager\n    .isActualTransactionActive();\nboolean rollbackOnly = TransactionAspectSupport\n    .currentTransactionStatus().isRollbackOnly();",
+              "destaque": "O teste deve observar o banco depois da conclusão do método proxied, não apenas o fluxo Java ou o log 'salvou'."
+            },
+            {
+              "titulo": "12. Checklist de revisão de código",
+              "conteudo": "Verifique: 1) quem cria o bean e qual referência é injetada; 2) se a chamada atravessa um proxy; 3) se o método é interceptável; 4) qual propagação está configurada; 5) quem inicia a transação física; 6) onde a exceção é capturada; 7) se houve rollback-only; 8) se há efeitos externos; 9) se testes verificam commit/rollback real; 10) se REQUIRES_NEW exige capacidade adicional no pool de conexões.",
+              "destaque": "Documentação oficial: https://docs.spring.io/spring-framework/reference/data-access/transaction/declarative.html e https://docs.spring.io/spring-framework/reference/core/aop/proxying.html"
+            }
+          ]
+        }
+      ]
     }
   ]
 }
